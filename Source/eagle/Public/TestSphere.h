@@ -12,13 +12,13 @@ UCLASS()
 class ATestSphere : public AActor
 {
 	GENERATED_BODY()
-    
-public:    
-	ATestSphere();
-	static constexpr int32 CHUNK_SIZE = 256;
-	UFUNCTION()
-	void OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+public:
+	ATestSphere();
+	static constexpr int32 CHUNK_SIZE = 16;
+	UFUNCTION()
+	void OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	                    FVector NormalImpulse, const FHitResult& Hit);
 
 protected:
 	virtual void BeginPlay() override;
@@ -34,20 +34,23 @@ private:
 	float VoxelSize = 50.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Voxel Sphere")
+	AActor* DamagedBy;
+
+	UPROPERTY(EditAnywhere, Category = "Voxel Sphere")
 	UStaticMesh* CubeMesh;
 
 	UPROPERTY(EditAnywhere, Category = "Voxel Sphere")
 	UMaterialInterface* CubeMaterial;
-	
+
 	TArray<TArray<TArray<FString>>> VoxelData;
 
 	void GenerateVoxelSphere();
-    void CreateCube(FVector Position, float Size, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, int32& TriangleOffset, const bool FaceVisibility[6]);
+	void CreateCube(FVector Position, float Size, TArray<FVector>& Vertices, TArray<int32>& Triangles,
+	                TArray<FVector>& Normals, TArray<FVector2D>& UVs, int32& TriangleOffset,
+	                const bool FaceVisibility[6]);
 	void GenerateChunk(FVector ChunkPosition);
 	void GenerateVoxelMeshFromChunk();
 	void RemoveVoxel(int32 X, int32 Y, int32 Z);
 	void RegenerateMesh();
 	void SpawnPhysicsCube(FVector Position);
-
-
 };

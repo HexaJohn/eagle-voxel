@@ -185,7 +185,7 @@ void ATestSphere::GenerateChunk(FVector ChunkPosition)
 
 	// Example: Generate a simple sphere in the chunk
 	FVector ChunkCenter(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2);
-	float Radius = CHUNK_SIZE / 3;
+	float Radius = SphereRadius;
 
 	for (int32 x = 0; x < CHUNK_SIZE; x++)
 	{
@@ -244,16 +244,23 @@ void ATestSphere::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* Othe
                                  FVector NormalImpulse, const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Hit!"));
-	if (OtherActor && OtherActor->IsRootComponentMovable())
+	if (OtherActor && OtherActor->IsRootComponentMovable() && OtherActor->IsA(DamagedBy->GetClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Removing!"));
+		UE_LOG(LogTemp, Warning, TEXT("Locating!"));
+		FVector GlobalHitLocation = OtherActor->GetActorLocation();
 		FVector LocalHitLocation = ProceduralMesh->GetComponentTransform().InverseTransformPosition(Hit.Location);
 		int32 X = FMath::FloorToInt(LocalHitLocation.X / VoxelSize);
 		int32 Y = FMath::FloorToInt(LocalHitLocation.Y / VoxelSize);
 		int32 Z = FMath::FloorToInt(LocalHitLocation.Z / VoxelSize);
+		int32 OtherX = FMath::FloorToInt(GlobalHitLocation.X);
+		int32 OtherY = FMath::FloorToInt(GlobalHitLocation.Y);
+		int32 OtherZ = FMath::FloorToInt(GlobalHitLocation.Z);
 
 		if (X >= 0 && X < CHUNK_SIZE && Y >= 0 && Y < CHUNK_SIZE && Z >= 0 && Z < CHUNK_SIZE)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Removing: %d, %d, %d"), X, Y, Z);
+			UE_LOG(LogTemp, Warning, TEXT("Hit At: %d, %d, %d"), OtherX, OtherY, OtherZ);
+			FVector OtherActorLocation = OtherActor->GetActorTransform().GetLocation();
 			RemoveVoxel(X, Y, Z);
 		}
 	}
@@ -265,13 +272,16 @@ void ATestSphere::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* Othe
 
 void ATestSphere::RemoveVoxel(int32 X, int32 Y, int32 Z)
 {
-	if (!VoxelData[X][Y][Z].IsEmpty())
+	FVector WorldPosition = GetActorLocation() + FVector(X * VoxelSize * 100, Y * VoxelSize * 100, Z * VoxelSize * 100);
+	if (VoxelData.Max() <= X && VoxelData.Max() <= Y && VoxelData.Max() <= Z)
 	{
-		FVector WorldPosition = GetActorLocation() + FVector(X * VoxelSize, Y * VoxelSize, Z * VoxelSize);
+		if (!VoxelData[X][Y][Z].IsEmpty())
+		{
+			VoxelData[X][Y][Z] = FString();
+			RegenerateMesh();
+			UE_LOG(LogTemp, Warning, TEXT("Removed!"));
+		}
 		SpawnPhysicsCube(WorldPosition);
-
-		VoxelData[X][Y][Z] = FString();
-		RegenerateMesh();
 	}
 }
 
